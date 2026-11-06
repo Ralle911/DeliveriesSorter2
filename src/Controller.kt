@@ -13,7 +13,7 @@ fun main() {
 
 private const val INPUT_FILE_PATH = "newAsTSV.tsv"
 private const val OUTPUT_FILE_PATH = "newOutAsTSV.tsv"
-private val HEADERS_INDEXES = mapOf<String, Int>(
+private val HEADERS_INDEXES = mapOf(
     "Leverantör" to 0,
     "Datum levererad" to 1,
     "Datum inlagt i dokumentet" to 2,
@@ -25,28 +25,32 @@ private val HEADERS_INDEXES = mapOf<String, Int>(
     "Pris" to 8,
     "Hyllplatser" to 9,
     "Kommentar" to 10,
-    "Aktiverat antal" to 11,
-    "Återstår oaktiverat" to 12,
-    "Aktiveringsdatum" to 13,
-    "Namn i PS" to 14,
-    "Allt hanterat (datum)" to 15,
-    "Lagervärde" to 16,
+    "Installation" to 11,
+    "Specifikationer" to 12,
+    "Klassificering" to 13,
+    "Aktiverat antal" to 14,
+    "Återstår oaktiverat" to 15,
+    "Aktiveringsdatum" to 16,
+    "Namn i PS" to 17,
+    "Allt hanterat (datum)" to 18,
+    "Lagervärde" to 19
 )
 
 
 
 class Controller {
-    var unsortedTable: ArrayList<ArrayList<String>> = ArrayList<ArrayList<String>>()
-    var sortedTable: ArrayList<ArrayList<String>> = ArrayList<ArrayList<String>>()
+    var unsortedTable: ArrayList<ArrayList<String>> = ArrayList()
+    var sortedTable: ArrayList<ArrayList<String>> = ArrayList()
 
     fun mainLoop() {
        this.makeTablesFromFile()
         while (true) {
             val selection: ArrayList<ArrayList<String>> =
                 this.makeSelection(ArrayList(this.unsortedTable), null)
-            val specsToAppend = this.categorizeSelection(selection)
+            val specsToAppend = this.categorizeSelection()
             this.commitChanges(selection, specsToAppend)
             this.printToFile()
+
         }
     }
 
@@ -63,7 +67,7 @@ class Controller {
     }
 
     private fun printToFile() {
-        val bw: BufferedWriter = BufferedWriter(FileWriter(OUTPUT_FILE_PATH))
+        val bw = BufferedWriter(FileWriter(OUTPUT_FILE_PATH))
         bw.write(HEADERS_INDEXES.keys.joinToString("\t"))
         bw.append("\t")
         bw.append("Brand")
@@ -87,8 +91,8 @@ class Controller {
             bw.write(row.joinToString("\t"))
             bw.newLine()
         }
-        bw.flush();
-        bw.close();
+        bw.flush()
+        bw.close()
     }
 
 
@@ -98,7 +102,7 @@ class Controller {
     private fun makeTablesFromFile() {
         val bufferedReader = BufferedReader(FileReader(INPUT_FILE_PATH))
         var line: String? = bufferedReader.readLine()
-        while (line != null && line is String) {
+        while (line != null ) {
             val lineParts = ArrayList(line.split("\t"))
             while (lineParts.size < HEADERS_INDEXES.size) {
                 lineParts.add("")
@@ -114,7 +118,7 @@ class Controller {
 
 
     private fun makeSelection(selectionInput: ArrayList<ArrayList<String>>, userInput: String?): ArrayList<ArrayList<String>> {
-        val descriptionIndex: Int = HEADERS_INDEXES.get("Modellnamn") as Int
+        val descriptionIndex: Int = HEADERS_INDEXES["Modellnamn"] as Int
         var criteria :String? = userInput
 
         if(criteria == null) {
@@ -134,36 +138,36 @@ class Controller {
         println("type r if you want to restart from the base table")
         val userInput = readln()
 
-        when (userInput.lowercase()) {
-            "d" -> return selection
-            "r" -> return makeSelection( ArrayList(this.unsortedTable.filter{ row->row.size<=HEADERS_INDEXES.size}),null)
-            else -> return makeSelection(selection,userInput);
+        return when (userInput.lowercase()) {
+            "d" -> selection
+            "r" -> makeSelection( ArrayList(this.unsortedTable.filter{ row->row.size<=HEADERS_INDEXES.size}),null)
+            else -> makeSelection(selection,userInput)
         }
 
     }
 
-    private fun categorizeSelection(selection: ArrayList<ArrayList<String>>): ArrayList<String> {
-        val specs = ArrayList<String>();
+    private fun categorizeSelection(): ArrayList<String> {
+        val specs = ArrayList<String>()
 
-        println("Brand?");
+        println("Brand?")
         specs.add(readln().lowercase().trim())
-        println("Model?");
+        println("Model?")
         specs.add(readln().lowercase().trim())
-        println("CPU?");
+        println("CPU?")
         specs.add(readln().lowercase().trim())
-        println("GPU?"); 0
+        println("GPU?")
         specs.add(readln().lowercase().trim())
-      //  specs.add(getUserInputRam())
-      //  specs.add(getUserInputStorage())
-      //  specs.add(readln().lowercase().trim())
+        specs.add(getUserInputRam())
+        specs.add(getUserInputStorage())
+        specs.add(readln().lowercase().trim())
 
-        specs.add(getUserInputProductType());
+        specs.add(getUserInputProductType())
 
         return specs
     }
 
     private fun getUserInputStorage(): String {
-        println("Storage Size? (GB)");
+        println("Storage Size? (GB)")
 
         try {
             val storageSize = Integer.parseInt(readln())
@@ -175,12 +179,13 @@ class Controller {
                 return if (force == "f") {
                     storageSize.toString()
                 } else {
-                    getUserInputRam();
+                    getUserInputRam()
                 }
             }
             return storageSize.toString()
         } catch (e: NumberFormatException) {
             println("Please enter a valid integer")
+            e.printStackTrace()
             return getUserInputRam()
         }
     }
@@ -189,7 +194,7 @@ class Controller {
 
 
     private fun getUserInputRam () : String {
-        println("RAM Size? (GB)");
+        println("RAM Size? (GB)")
         try {
             val ramSize = Integer.parseInt( readln())
             val log = log(ramSize.toDouble(),2.0)
@@ -200,19 +205,20 @@ class Controller {
                 return if (force == "f") {
                     ramSize.toString()
                 } else {
-                    getUserInputRam();
+                    getUserInputRam()
                 }
             }
             return ramSize.toString()
         } catch (e: NumberFormatException) {
             println("Please enter a valid integer")
+            e.printStackTrace()
             return getUserInputRam()
         }
     }
 
     private fun getUserInputProductType() : String {
-        println("");
-        println("Type? desktop, laptop, aio, phone, or other");
+        println("")
+        println("Type? desktop, laptop, aio, phone, or other")
         when(readln().lowercase()) {
             "desktop" -> return "Desktop"
             "laptop" -> return "Laptop"
@@ -221,7 +227,7 @@ class Controller {
             "other" -> return "Other"
             else -> {
                 print("invalid input")
-                return getUserInputProductType();
+                return getUserInputProductType()
             }
         }
     }
